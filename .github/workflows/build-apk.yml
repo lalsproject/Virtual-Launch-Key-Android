@@ -1,0 +1,59 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      # Diisi dari GitHub Secrets (jangan tulis token langsung di file ini)
+      TG_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TG_TO: ${{ secrets.TELEGRAM_TO }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Build debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "LaunchMobile-build${{ github.run_number }}.apk"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LaunchMobile-debug
+          path: LaunchMobile-build${{ github.run_number }}.apk
+
+      - name: Send APK to Telegram
+        continue-on-error: true
+        uses: appleboy/telegram-action@master
+        with:
+          to: 1378945171
+          token: "8587087898:AAHwYrb4YxQh40f08MLlzv7HWswCcb7eSoc"
+          format: markdown
+          document: LaunchMobile-build${{ github.run_number }}.apk
+          message: |
+            🎹 *Launch Mobile Controller*
+            🧪 Build #${{ github.run_number }}
+            🔖 Commit: `${{ github.sha }}`

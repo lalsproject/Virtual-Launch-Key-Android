@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<devices>
+    <device manufacturer="LaunchMobile" product="Launch Mobile Controller">
+        <output-port name="Controller Out" />
+    </device>
+</devices>
